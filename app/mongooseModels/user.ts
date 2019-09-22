@@ -60,7 +60,7 @@ userSchema.methods.createNewTodoItem = function (request: express.Request, respo
 }
 
 userSchema.methods.getTodoById = function (request: express.Request, response: express.Response) {
-  userModel.findOne(username: request.session.passport.user, {"todos._id": mongoose.Types.ObjectId(request.body.id)})
+  userModel.findOne({username: request.session.passport.user, "todos._id": mongoose.Types.ObjectId(request.body.id)})
   .then(function (doc) {
     if (doc) {
       for(var item of doc.todos){
