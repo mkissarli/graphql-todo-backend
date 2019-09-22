@@ -22,22 +22,35 @@ export const userSchema = new mongoose.Schema({
   }
 });
 
-userSchema.methods.createNew = function (request: express.Request, response: express.Response) {
-  let userData: User = request.body;
-  userModel.exists(userData, function (err, done) {
-    if (!done) {
-      const createdUser = new userModel(userData);
-      createdUser.save()
-        .then(savedUser => {
-          response.send(savedUser);
-        });
-    }
-    else {
-      response.send({ message: "Already have a user with that name." });
-    }
-  });
-
-};
+userSchema.methods.createNew = function (username: String, password: String) {
+  let userData = { username: username, password: password };
+  
+  return userModel.exists(userData)
+    .then(function(done) {
+      if(!done){
+        const createdUser = new userModel(userData);
+        return createdUser.save()
+          .then(function (savedUser) {
+            return {
+              message: ("Created user: " + username + "."),
+              user: savedUser
+            }
+          })
+        }
+        else {
+          return {
+            message: "Unable to create user: " + username + " as there is already a user with this name.",
+            user: null
+          }
+        }
+      })
+      .catch(function(err) {
+        return {
+          message: "There was an error: " + err,
+          user: null
+        }
+      })
+}
 
 userSchema.methods.createNewTodoItem = function (request: express.Request, response: express.Response) {
   //console.log(request.session);
@@ -60,22 +73,22 @@ userSchema.methods.createNewTodoItem = function (request: express.Request, respo
 }
 
 userSchema.methods.getTodoById = function (request: express.Request, response: express.Response) {
-  userModel.findOne({username: request.session.passport.user, "todos._id": mongoose.Types.ObjectId(request.body.id)})
-  .then(function (doc) {
-    if (doc) {
-      for(var item of doc.todos){
-        if(item._id == request.body.id){
-          response.send(item);
+  userModel.findOne({ username: request.session.passport.user, "todos._id": mongoose.Types.ObjectId(request.body.id) })
+    .then(function (doc) {
+      if (doc) {
+        for (var item of doc.todos) {
+          if (item._id == request.body.id) {
+            response.send(item);
+          }
         }
       }
-    }
-    else {
-      console.log(doc);
-      response.send(false);
-    }
-  }).catch(function(err) {
-    console.log(err);
-  });
+      else {
+        console.log(doc);
+        response.send(false);
+      }
+    }).catch(function (err) {
+      console.log(err);
+    });
 }
 
 export const userModel = mongoose.model<User & mongoose.Document>('User', userSchema);
