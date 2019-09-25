@@ -22,11 +22,12 @@ export const userSchema = new mongoose.Schema({
   }
 });
 
-userSchema.methods.createNew = function (username: String, password: String) {
-  let userData = { username: username, password: password };
+userSchema.methods.createNew = async function (username: String, password: String) {
+  let userData = { username: username };
   
   return userModel.exists(userData)
-    .then(function(done) {
+    .then(async function(done) {
+      console.log(done);
       if(!done){
         const createdUser = new userModel(userData);
         return createdUser.save()
@@ -44,7 +45,7 @@ userSchema.methods.createNew = function (username: String, password: String) {
           }
         }
       })
-      .catch(function(err) {
+      .catch(async function(err) {
         return {
           message: "There was an error: " + err,
           user: null
@@ -71,6 +72,10 @@ userSchema.methods.createNewTodoItem = function (request: express.Request, respo
       console.log(err);
     });
 }
+
+//userSchema.methods.createNewTodoItem = async function (text: string){
+  //userModel.findOne({})
+//}
 
 userSchema.methods.getTodoById = function (request: express.Request, response: express.Response) {
   userModel.findOne({ username: request.session.passport.user, "todos._id": mongoose.Types.ObjectId(request.body.id) })
