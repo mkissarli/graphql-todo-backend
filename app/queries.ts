@@ -6,45 +6,41 @@ import jwt from 'jsonwebtoken';
 import Auth from './auth/auth';
 
 const SECRET_KEY = "secret!";
-const REFRESH_TOKEN_SECRET = "asdkljlaksjdfklajsdl";
 
 export const queries = {
-  getUsers: function (_, args, { req }) {
+  getUsers: function (_, args, context) {
     //return context.req.user;
-    return userModel.findById(req._id);
+    if (!context.user) {
+      throw new Error('You are not authorized!')
+    }
+    return userModel.findById(context.user._id);
   },
-  me: (_, __, { req }) => {
-      if (!req._id) {
-        return null;
-      }
+  me: (_, __, context) => {
+    if (!context) {
+      throw new Error('You are not authorized!')
+    }
 
-      return userModel.findById(req._id);
+    return context;
   },
-  loginUser: async function (parent: any, args: any, { res }) {
+  loginUser: async function (parent: any, args: any) {
     return await userModel.findOne({ username: args.username })
       .then(async function (doc) {
         return await Auth.compare(args.password, doc.password)
           .then(async function () {
-            const refreshToken = jwt.sign(
-              { _id: doc.id, username: args.username },
-              REFRESH_TOKEN_SECRET,
-              {
-                expiresIn: "7d"
-              }
-            );
-            const accessToken = jwt.sign({ _id: doc.id }, SECRET_KEY, {
-              expiresIn: "15min"
-            });
-      
-            res.cookie("refresh-token", refreshToken);
-            res.cookie("access-token", accessToken);
-      
-            return doc;
+            const token = jwt.sign({
+              id: doc._id,
+              username: doc.username
+            },
+            SECRET_KEY, { expiresIn: '1y' }
+            )
+            return {token: token};
           })
-          .catch(async function () { return { message: "password failed:" }; });
+          .catch(async function () { return { message: "password failed:" }; })
+          .catch(async function () { return { message: "user failed" }; });
       })
-      .catch(async function () { return { message: "user failed" }; });
   }
 };
+
+
 
 export default queries;
