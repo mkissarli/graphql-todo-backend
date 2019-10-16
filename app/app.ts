@@ -1,142 +1,81 @@
 import express from 'express';
-
 import { ApolloServer, gql, AuthenticationError } from 'apollo-server-express';
+import { importSchema } from 'graphql-import'
 
 import passport from './auth/passportStrategy';
+import jwt from 'jsonwebtoken';
+import cookieParser from "cookie-parser";
+
+import uuid from 'uuid';
+import bodyParser from 'body-parser';
 
 import mongoose, { Query } from 'mongoose';
-
-import { userModel, userSchema } from './mongooseModels/user';
-import { todoItemSchema } from './mongooseModels/todoItem';
-
 mongoose.connect(`mongodb://localhost/users`);
 mongoose.Promise = global.Promise;
 
-import Auth from './auth/auth';
-
-import uuid from 'uuid/v4';
-import jwt from 'jsonwebtoken';
-import { tokenize } from 'protobufjs';
+import queries from './queries';
+import mutations from './mutations';
 
 // A schema is a collection of type definitions (hence "typeDefs")
 // that together define the "shape" of queries that are executed against
 // your data.
-const typeDefs = gql`
-  type TodoItem {
-    id: ID!
-    text: String
-    isCurrent: Boolean
-    created: String
-  }
+const typeDefs = importSchema('./app/schema.graphql');
 
-  type User {
-    id: ID!
-    username: String
-    todos: [TodoItem]
-    created: String ## Unix Timestamp
-  }
-
-  type Query {
-    getUsers: [User]
-    loginUser(username: String!, password: String!): String
-  }
-
-  interface MutationResponse {
-    code: String!
-    success: Boolean!
-    message: String!
-  }
-
-  type UserMutationResponse implements MutationResponse {
-    code: String!
-    success: Boolean!
-    message: String!
-    user: User
-    token: String
-  }
-
-
-  type Mutation {
-    addUser(username: String!, password: String!): UserMutationResponse!
-    ##loginUser(username: String!, password: String!): UserMutationResponse!
-    
-  }
-`;
-
-const SECRET_KEY = 'secret!';
-
-function requireLogin(token: string) {
-  try {
-    return { id: _id, username: username } = jwt.verify(token.split(' ')[1], SECRET_KEY)
-  } catch (e) {
-    throw new AuthenticationError(
-      'Authentication token is invalid, please log in',
-    )
-  }
-}
-
-// Resolvers define the technique for fetching the types defined in the
-// schema. This resolver retrieves books from the "books" array above.
 const resolvers = {
-  Query: {
-    getUsers: function () { return userModel.find({}); },
-    loginUser: async function (parent: any, args: any) {
-      return await userModel.findOne({ username: args.username })
-        .then(async function (doc) {
-          return await Auth.compare(args.password, doc.password)
-            .then(async function(){return "Password match";})
-            .catch(async function(){return "password failed:" + doc;});
-        })
-        .catch(async function(){return "user failed";});
-      }
-  },
-  Mutation: {
-    addUser: async function (parent: any, args: any) {
-      //console.log(context);
-      return await Auth.hashPassword(args.password, 12)
-        .then(async function (hash) {
-          let response = await userSchema.methods.createNew(args.username, hash);
-          const token = jwt.sign(
-            { username: response.user.username, id: response.user._id },
-            SECRET_KEY,
-          )
-          return {
-            code: 200,
-            success: true,
-            message: response.message,
-            user: response.user,
-            token: token
-          }
-        })
-        .catch(async function (error) {
-          // Throw an error
-          return {
-            code: 200,
-            success: false,
-            message: "Unable to hash password:" + error,
-            user: null
-          }
-        })
-    },
-
-  }
+  Query: queries,
+  Mutation: mutations
 }
+
+const SECRET_KEY = "secret";
 
 const app = express();
 
-app.use(passport.initialize());
-app.use(passport.session());
+app.use(cookieParser());
+
+app.post('/signup', passport.authenticate('signup', { session: false }), async function (req, res, next) {
+  res.json({
+    message: 'Signup successful',
+    user: req.user
+  });
+});
+
+app.post('/login', async function (req: express.Request, res: express.Response, next) {
+  passport.authenticate('login', { successRedirect: '/graphql', failureRedirect: '/login' }, async function (err, user, info) {
+    try {
+      if (err || !user) {
+        const error = new Error('An Error occured')
+        return next(error);
+      }
+      req.login(user, { session: false }, async (error) => {
+        if (error) return next(error)
+        //We don't want to store the sensitive information such as the
+        //user password in the token so we pick only the email and id
+        const body = { _id: user._id, username: user.username, todoItems: user.todoItems };
+
+        //Send back the token to the user
+        return res.json({ body });
+      });
+    } catch (error) {
+      return next(error);
+    }
+  })(req, res, next);
+});
+
+app.use((req, _, next) => {
+  const accessToken = req.cookies["access-token"];
+  try {
+    const data = jwt.verify(accessToken, SECRET_KEY) as any;
+    (req as any)._id = data._id;
+  } catch {}
+  next();
+});
 
 // The ApolloServer constructor requires two parameters: your schema
 // definition and your set of resolvers.
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  context: ({ req }) => {
-    const token = req.headers.authorization || ''
-
-    return token;
-  }
+  context: async (req, res) => ({ req, res })
 });
 
 server.applyMiddleware({ app, path: '/graphql' })

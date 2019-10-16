@@ -1,0 +1,39 @@
+  type TodoItem {
+    id: ID!
+    text: String
+    isCurrent: Boolean
+    created: String
+  }
+
+  type User {
+    id: ID!
+    username: String
+    todos: [TodoItem]
+    created: String ## Unix Timestamp
+  }
+
+  interface MutationResponse {
+    code: String!
+    success: Boolean!
+    message: String!
+  }
+
+  type UserMutationResponse implements MutationResponse {
+    code: String!
+    success: Boolean!
+    message: String!
+    user: User
+    token: String
+  }
+
+  type Query {
+    getUsers: [User]
+    me: User
+    loginUser(username: String!, password: String!): UserMutationResponse
+  }
+
+  type Mutation {
+    addUser(username: String!, password: String!): UserMutationResponse!
+    ##loginUser(username: String!, password: String!): UserMutationResponse!
+    
+  }
