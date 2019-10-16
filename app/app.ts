@@ -15,9 +15,8 @@ mongoose.Promise = global.Promise;
 import Auth from './auth/auth';
 
 import uuid from 'uuid/v4';
-import session from 'express-session';
-import redis from 'redis';
-var redisStore = require('connect-redis')(session);
+import jwt from 'jsonwebtoken';
+import { tokenize } from 'protobufjs';
 
 // A schema is a collection of type definitions (hence "typeDefs")
 // that together define the "shape" of queries that are executed against
@@ -39,6 +38,7 @@ const typeDefs = gql`
 
   type Query {
     getUsers: [User]
+    loginUser(username: String!, password: String!): String
   }
 
   interface MutationResponse {
@@ -52,32 +52,60 @@ const typeDefs = gql`
     success: Boolean!
     message: String!
     user: User
+    token: String
   }
+
 
   type Mutation {
     addUser(username: String!, password: String!): UserMutationResponse!
-    loginUser(username: String!, password: String!): UserMutationResponse!
+    ##loginUser(username: String!, password: String!): UserMutationResponse!
+    
   }
-
-
 `;
+
+const SECRET_KEY = 'secret!';
+
+function requireLogin(token: string) {
+  try {
+    return { id: _id, username: username } = jwt.verify(token.split(' ')[1], SECRET_KEY)
+  } catch (e) {
+    throw new AuthenticationError(
+      'Authentication token is invalid, please log in',
+    )
+  }
+}
 
 // Resolvers define the technique for fetching the types defined in the
 // schema. This resolver retrieves books from the "books" array above.
 const resolvers = {
   Query: {
     getUsers: function () { return userModel.find({}); },
+    loginUser: async function (parent: any, args: any) {
+      return await userModel.findOne({ username: args.username })
+        .then(async function (doc) {
+          return await Auth.compare(args.password, doc.password)
+            .then(async function(){return "Password match";})
+            .catch(async function(){return "password failed:" + doc;});
+        })
+        .catch(async function(){return "user failed";});
+      }
   },
   Mutation: {
     addUser: async function (parent: any, args: any) {
+      //console.log(context);
       return await Auth.hashPassword(args.password, 12)
         .then(async function (hash) {
           let response = await userSchema.methods.createNew(args.username, hash);
+          const token = jwt.sign(
+            { username: response.user.username, id: response.user._id },
+            SECRET_KEY,
+          )
           return {
             code: 200,
             success: true,
             message: response.message,
-            user: response.user
+            user: response.user,
+            token: token
           }
         })
         .catch(async function (error) {
@@ -89,35 +117,28 @@ const resolvers = {
             user: null
           }
         })
-    }
+    },
+
   }
 }
 
-const redisClient = redis.createClient();
-
-redisClient.on('error', (err) => {
-  console.log('Redis error: ', err);
-});
-
 const app = express();
-app.use(session({
-  genid: (req) => {
-    return uuid()
-  },
-  store: new redisStore({ host: 'localhost', port: 6379, client: redisClient }),
-  name: '_redisDemo',
-  secret: "testytestpassword",
-  resave: false,
-  cookie: { secure: false, maxAge: 60000 }, // Set to secure:false and expire in 1 minute for demo purposes
-  saveUninitialized: true
-}));
 
-app.use(passport.initialize())
-app.use(passport.session())
+app.use(passport.initialize());
+app.use(passport.session());
 
 // The ApolloServer constructor requires two parameters: your schema
 // definition and your set of resolvers.
-const server = new ApolloServer({ typeDefs, resolvers });
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: ({ req }) => {
+    const token = req.headers.authorization || ''
+
+    return token;
+  }
+});
+
 server.applyMiddleware({ app, path: '/graphql' })
 
 app.listen(3000, () => {

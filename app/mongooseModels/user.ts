@@ -23,11 +23,10 @@ export const userSchema = new mongoose.Schema({
 });
 
 userSchema.methods.createNew = async function (username: String, password: String) {
-  let userData = { username: username };
+  let userData = { username: username, password: password };
   
   return userModel.exists(userData)
     .then(async function(done) {
-      console.log(done);
       if(!done){
         const createdUser = new userModel(userData);
         return createdUser.save()
