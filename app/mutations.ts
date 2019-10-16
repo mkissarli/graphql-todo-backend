@@ -8,8 +8,7 @@ import Auth from './auth/auth';
 const SECRET_KEY = "secret!";
 
 export const mutations = {
-  addUser: async function (parent: any, args: any, context: any) {
-    //console.log(context);
+  addUser: async function (parent: any, args: {username: string, password: string}, context: any) {
     return await Auth.hashPassword(args.password, 12)
       .then(async function (hash) {
         let response = await userSchema.methods.createNew(args.username, hash);
@@ -36,6 +35,17 @@ export const mutations = {
         }
       })
   },
+  addTodo: async function(parent: any, args: {text: string}, context: any){
+    Auth.requireAuth(context);
+  },
+  deleteTodo: async function(parent: any, args: {id: string}, context: any){
+    Auth.requireAuth(context);
+  },
+  editTodo: async function(parent: any, args: {id: string, text: string}, context: any){
+    Auth.requireAuth(context);
+  },  
+
+
 };
 
 export default mutations;

@@ -8,23 +8,21 @@ import Auth from './auth/auth';
 const SECRET_KEY = "secret!";
 
 export const queries = {
-  getUsers: function (_, args, context) {
+  // Get all users.
+  getUsers: function (_: any, __: any, context: any) {
     //return context.req.user;
-    if (!context.user) {
-      throw new Error('You are not authorized!')
-    }
-    return userModel.findById(context.user._id);
+    Auth.requireSpecificAuth(context.username, "admin");
+    return userModel.find({});
   },
-  me: (_, __, context) => {
-    if (!context) {
-      throw new Error('You are not authorized!')
-    }
-
+  // Get yourself.
+  me: (_: any, __: any, context: any) => {
+    Auth.requireAuth(context);
     return context;
   },
-  loginUser: async function (parent: any, args: any) {
+  // Login and recieve a token, which needs to be put into a header.
+  loginUser: async function (parent: any, args: {username: string, password: string}) {
     return await userModel.findOne({ username: args.username })
-      .then(async function (doc) {
+      .then(async function (doc: any) {
         return await Auth.compare(args.password, doc.password)
           .then(async function () {
             const token = jwt.sign({
@@ -33,14 +31,34 @@ export const queries = {
             },
             SECRET_KEY, { expiresIn: '1y' }
             )
-            return {token: token};
+            return {
+              status: 200,
+              message: "Login successful, token created.",
+              success: true,
+              user: doc,
+              token: token
+            };
           })
-          .catch(async function () { return { message: "password failed:" }; })
-          .catch(async function () { return { message: "user failed" }; });
+          .catch(async function () { 
+            return { 
+              status: 200,
+              success: false,
+              message: "User login failed, no token will be generated.",
+              token: null,
+              user: null
+            };
+          })
+          .catch(async function () {
+            return {
+              status: 200,
+              success: false,
+              message: "User login failed, no token will be generated.",
+              token: null,
+              user: null
+            };
+          });
       })
   }
 };
-
-
 
 export default queries;

@@ -23,17 +23,32 @@
     success: Boolean!
     message: String!
     user: User
+  }
+
+  type TodoItemResponse implements MutationResponse {
+    code: String!
+    success: Boolean!
+    message: String!
+    todo: TodoItem
+  }
+
+  type LoginUserResponse implements MutationResponse {
+    code: String!
+    success: Boolean!
+    message: String!
+    user: User
     token: String
   }
 
   type Query {
     getUsers: [User]
     me: User
-    loginUser(username: String!, password: String!): UserMutationResponse
+    loginUser(username: String!, password: String!): UserMutationResponse!
   }
 
   type Mutation {
     addUser(username: String!, password: String!): UserMutationResponse!
-    ##loginUser(username: String!, password: String!): UserMutationResponse!
-    
+    addTodo(text: String!): TodoItemResponse!
+    deleteTodo(id: ID!): MutationResponse!
+    editTodo(id: ID!, text: String!): TodoItemResponse!
   }

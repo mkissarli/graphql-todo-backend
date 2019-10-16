@@ -27,4 +27,16 @@ export default class Auth {
     });
     return match;
   }
+
+  public static requireAuth(context) {
+    if (!context) {
+      throw new Error('You are not authorized!')
+    }
+  }
+
+  public static requireSpecificAuth(context, value){
+    if (context != value) {
+      throw new Error('You are not authorized!')
+    }
+  }
 }
