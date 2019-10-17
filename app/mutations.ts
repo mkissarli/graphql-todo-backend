@@ -58,6 +58,11 @@ export const mutations = {
   },
   deleteTodo: async function (parent: any, args: { id: string }, context: any) {
     Auth.requireAuth(context);
+    await userModel.findById(context.id)
+      .then(async function(doc){
+        doc.todos.pull(args.id);
+        doc.save()
+      });
     return await todoItemSchema.methods.deleteById(args.id)
       .then(async function (response) {
         return {

@@ -49,6 +49,23 @@ userSchema.methods.createNew = async function (username: String, password: Strin
     })
 }
 
+userSchema.methods.getUser = async function (id: string) {
+  return await userModel.findById(id)
+    .then(async function (doc) {
+      var todos: any[] = [];
+      doc.todos.forEach(function (i) {
+        todos.push(todoItemModel.findById(i));
+      });
+      return {
+        message: "Found user.",
+        user: doc,
+        todos: todos,
+        success: true,
+        code: 200  
+      }
+    })
+}
+
 userSchema.methods.createNewTodoItem = async function (userId: string, text: string) {
   //console.log(request.session);
   return await userModel.findById(userId)
@@ -69,7 +86,7 @@ userSchema.methods.createNewTodoItem = async function (userId: string, text: str
             success: false
           }
         })
-      if(newTodo.todo){
+      if (newTodo.todo) {
         doc.todos.push(newTodo.todo._id);
         doc.save();
       }

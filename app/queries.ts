@@ -9,15 +9,15 @@ const SECRET_KEY = "secret!";
 
 export const queries = {
   // Get all users.
-  getUsers: function (_: any, __: any, context: any) {
+  getUsers: async function (_: any, __: any, context: any) {
     //return context.req.user;
     Auth.requireSpecificAuth(context.username, "admin");
     return userModel.find({});
   },
   // Get yourself.
-  me: (_: any, __: any, context: any) => {
+  me: async function (_: any, __: any, context: any) {
     Auth.requireAuth(context);
-    return context;
+    return await userSchema.methods.getUser(context.id);
   },
   // Login and recieve a token, which needs to be put into a header.
   loginUser: async function (parent: any, args: {username: string, password: string}) {
