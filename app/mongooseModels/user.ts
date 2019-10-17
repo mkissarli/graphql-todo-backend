@@ -6,16 +6,13 @@ import { request } from 'https';
 export interface User {
   username: string,
   password: string
-  todos: [TodoItem]
+  todos: [string]
 }
 
 export const userSchema = new mongoose.Schema({
   username: String,
   password: String,
-  todos: {
-    type: [todoItemSchema],
-    //default: new Array
-  },
+  todos: [String],
   created: {
     type: Date,
     default: Date.now
@@ -24,10 +21,10 @@ export const userSchema = new mongoose.Schema({
 
 userSchema.methods.createNew = async function (username: String, password: String) {
   let userData = { username: username, password: password };
-  
+
   return userModel.exists(userData)
-    .then(async function(done) {
-      if(!done){
+    .then(async function (done) {
+      if (!done) {
         const createdUser = new userModel(userData);
         return createdUser.save()
           .then(function (savedUser) {
@@ -36,44 +33,63 @@ userSchema.methods.createNew = async function (username: String, password: Strin
               user: savedUser
             }
           })
-        }
-        else {
-          return {
-            message: "Unable to create user: " + username + " as there is already a user with this name.",
-            user: null
-          }
-        }
-      })
-      .catch(async function(err) {
+      }
+      else {
         return {
-          message: "There was an error: " + err,
+          message: "Unable to create user: " + username + " as there is already a user with this name.",
           user: null
         }
-      })
+      }
+    })
+    .catch(async function (err) {
+      return {
+        message: "There was an error: " + err,
+        user: null
+      }
+    })
 }
 
-userSchema.methods.createNewTodoItem = async function (id: string, text: string) {
+userSchema.methods.createNewTodoItem = async function (userId: string, text: string) {
   //console.log(request.session);
-  return await userModel.findById(id)
+  return await userModel.findById(userId)
     .then(async function (doc) {
-      let newTodo = new todoItemModel({ text: text });
-        doc.todos.push(newTodo);
+      const newTodo = await todoItemSchema.methods.createNew(text)
+        .then(async function (todoDoc) {
+          return {
+            code: 200,
+            todo: todoDoc,
+            message: "Todo successfully added.",
+            success: true
+          }
+        }).catch(async function (err) {
+          return {
+            code: 200,
+            todo: null,
+            message: "There's been an error adding the todo item: " + err,
+            success: false
+          }
+        })
+      if(newTodo.todo){
+        doc.todos.push(newTodo.todo._id);
         doc.save();
-        return {
-          user: doc,
-          message: "Todo successfully added.",
-          success: true
-        }
+      }
+      return {
+        todo: newTodo.todo,
+        message: newTodo.message,
+        success: newTodo.success,
+        user: doc
+      }
     })
+
     .catch(async function (err) {
       return {
         message: err,
         success: false
       }
     });
-  }
+}
 //userSchema.methods.createNewTodoItem = async function (text: string){
-  //userModel.findOne({})
+//userModel.findOne({})
 //}
 
 userSchema.methods.getTodoById = function (request: express.Request, response: express.Response) {

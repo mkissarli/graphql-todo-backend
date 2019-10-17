@@ -8,7 +8,7 @@
   type User {
     id: ID!
     username: String
-    todos: [TodoItem]
+    todos: [ID]
     created: String ## Unix Timestamp
   }
 
@@ -53,4 +53,5 @@
     addTodo(text: String!): TodoItemResponse!
     deleteTodo(id: ID!): MutationResponse!
     editTodo(id: ID!, text: String!): TodoItemResponse!
+    toggleTodo(id: ID!): TodoItemResponse!
   }

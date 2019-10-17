@@ -1,9 +1,10 @@
 import mongoose, { Query } from 'mongoose';
 import { userModel, userSchema } from './mongooseModels/user';
-import { todoItemSchema } from './mongooseModels/todoItem';
+import { todoItemSchema, todoItemModel } from './mongooseModels/todoItem';
 
 import jwt from 'jsonwebtoken';
 import Auth from './auth/auth';
+import { disconnect } from 'cluster';
 
 const SECRET_KEY = "secret!";
 
@@ -36,19 +37,15 @@ export const mutations = {
   },
   addTodo: async function (parent: any, args: { text: string }, context: any) {
     Auth.requireAuth(context);
-    return await userModel.findById(context.id)
-      .then(async function (doc) {
-        return await userSchema.methods.createNewTodoItem(context.id, args.text)
-          .then(async function (todoResponse) {
-            return {
-              code: 200,
-              success: todoResponse.success,
-              message: todoResponse.message,
-              todoItem: todoResponse.todoItem,
-              user: todoResponse.user
-            }
-          }
-          )
+    return await userSchema.methods.createNewTodoItem(context.id, args.text)
+      .then(async function (todoResponse) {
+        return {
+          code: 200,
+          success: todoResponse.success,
+          message: todoResponse.message,
+          todo: todoResponse.todo,
+          user: todoResponse.user
+        }
       })
       .catch(async function (err) {
         return {
@@ -62,15 +59,15 @@ export const mutations = {
   deleteTodo: async function (parent: any, args: { id: string }, context: any) {
     Auth.requireAuth(context);
     return await todoItemSchema.methods.deleteById(args.id)
-      .then(async function(response){
+      .then(async function (response) {
         return {
           code: 200,
-          success: response.success,
-          message: response.message,
-          todo: response.todo
+          success: response.success as boolean,
+          message: response.message as string,
+          //todo: response.todo
         }
       })
-      .catch(async function(error){
+      .catch(async function (error) {
         return {
           code: 200,
           success: false,
@@ -81,7 +78,7 @@ export const mutations = {
   editTodo: async function (parent: any, args: { id: string, text: string }, context: any) {
     Auth.requireAuth(context);
     return await todoItemSchema.methods.editById(args.id, args.text)
-      .then(async function(response){
+      .then(async function (response) {
         return {
           code: 200,
           success: response.success,
@@ -89,11 +86,30 @@ export const mutations = {
           todo: response.todo
         }
       })
-      .catch(async function(error){
+      .catch(async function (error) {
         return {
           code: 200,
           success: false,
           message: "Error editing todo: " + error
+        }
+      });
+  },
+  toggleTodo: async function (parent: any, args: { id: string }, context: any) {
+    Auth.requireAuth(context);
+    return await todoItemSchema.methods.toggleById(args.id)
+      .then(async function (response) {
+        return {
+          code: 200,
+          success: response.success,
+          message: response.message,
+          todo: response.todo
+        }
+      })
+      .catch(async function (error) {
+        return {
+          code: 200,
+          success: false,
+          message: "Error toggling current state of todo: " + error
         }
       });
   },
