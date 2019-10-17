@@ -62,8 +62,8 @@ export const mutations = {
       .then(async function (response) {
         return {
           code: 200,
-          success: response.success as boolean,
-          message: response.message as string,
+          success: response.success,
+          message: response.message,
           //todo: response.todo
         }
       })

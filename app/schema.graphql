@@ -51,7 +51,7 @@
   type Mutation {
     addUser(username: String!, password: String!): UserMutationResponse!
     addTodo(text: String!): TodoItemResponse!
-    deleteTodo(id: ID!): MutationResponse!
+    deleteTodo(id: ID!): TodoItemResponse!
     editTodo(id: ID!, text: String!): TodoItemResponse!
     toggleTodo(id: ID!): TodoItemResponse!
   }

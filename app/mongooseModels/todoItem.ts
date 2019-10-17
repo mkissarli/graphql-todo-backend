@@ -19,24 +19,24 @@ export const todoItemSchema = new mongoose.Schema({
   }
 });
 
-todoItemSchema.methods.createNew = async function (text: string){
-  const todo = new todoItemModel({text: text, isCurrent: true});
+todoItemSchema.methods.createNew = async function (text: string) {
+  const todo = new todoItemModel({ text: text, isCurrent: true });
   todo.save();
   return todo;
-    /*.then(async function(doc){
-      return {
-        code: 200,
-        success: true,
-        message: "User added."
-      }
-    })
-    .catch(async function(err){
-      return{
-        code: 200,
-        success: false,
-        message: "Error adding todo item: " + err
-      }
-    });*/
+  /*.then(async function(doc){
+    return {
+      code: 200,
+      success: true,
+      message: "User added."
+    }
+  })
+  .catch(async function(err){
+    return{
+      code: 200,
+      success: false,
+      message: "Error adding todo item: " + err
+    }
+  });*/
 }
 
 todoItemSchema.methods.deleteById = async function (id: string) {
@@ -47,7 +47,6 @@ todoItemSchema.methods.deleteById = async function (id: string) {
         code: 200,
         success: true,
         message: "Todo item has successfully been removed.",
-        user: doc
       }
     })
     .catch(async function (err) {
@@ -94,7 +93,7 @@ todoItemSchema.methods.toggleById = async function (id: string) {
         //todo: userModel.findOne({"todos._id": id}, {"todos.$": true})
       }
     })
-    .catch(async function(err){
+    .catch(async function (err) {
       return {
         code: 200,
         success: false,
