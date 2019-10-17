@@ -62,8 +62,7 @@ userSchema.methods.createNewTodoItem = async function (id: string, text: string)
         return {
           user: doc,
           message: "Todo successfully added.",
-          success: true,
-          todoItem: doc.todos[newTodo.id]
+          success: true
         }
     })
     .catch(async function (err) {

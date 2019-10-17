@@ -61,9 +61,41 @@ export const mutations = {
   },
   deleteTodo: async function (parent: any, args: { id: string }, context: any) {
     Auth.requireAuth(context);
+    return await todoItemSchema.methods.deleteById(args.id)
+      .then(async function(response){
+        return {
+          code: 200,
+          success: response.success,
+          message: response.message,
+          todo: response.todo
+        }
+      })
+      .catch(async function(error){
+        return {
+          code: 200,
+          success: false,
+          message: "Error deleting todo: " + error
+        }
+      });
   },
   editTodo: async function (parent: any, args: { id: string, text: string }, context: any) {
     Auth.requireAuth(context);
+    return await todoItemSchema.methods.editById(args.id, args.text)
+      .then(async function(response){
+        return {
+          code: 200,
+          success: response.success,
+          message: response.message,
+          todo: response.todo
+        }
+      })
+      .catch(async function(error){
+        return {
+          code: 200,
+          success: false,
+          message: "Error editing todo: " + error
+        }
+      });
   },
 
 
