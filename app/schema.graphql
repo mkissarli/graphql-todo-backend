@@ -23,6 +23,7 @@
     success: Boolean!
     message: String!
     user: User
+    token: String
   }
 
   type TodoItemResponse implements MutationResponse {
@@ -30,6 +31,7 @@
     success: Boolean!
     message: String!
     todo: TodoItem
+    user: User
   }
 
   type LoginUserResponse implements MutationResponse {

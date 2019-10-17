@@ -52,26 +52,27 @@ userSchema.methods.createNew = async function (username: String, password: Strin
       })
 }
 
-userSchema.methods.createNewTodoItem = function (request: express.Request, response: express.Response) {
+userSchema.methods.createNewTodoItem = async function (id: string, text: string) {
   //console.log(request.session);
-  userModel.findOne({ username: request.session.passport.user })
-    .then(function (doc) {
-      let newTodo = new todoItemModel({ text: request.body.text });
-
-      if (doc) {
+  return await userModel.findById(id)
+    .then(async function (doc) {
+      let newTodo = new todoItemModel({ text: text });
         doc.todos.push(newTodo);
         doc.save();
-        response.send(newTodo);
+        return {
+          user: doc,
+          message: "Todo successfully added.",
+          success: true,
+          todoItem: doc.todos[newTodo.id]
+        }
+    })
+    .catch(async function (err) {
+      return {
+        message: err,
+        success: false
       }
-      else {
-        response.send(false);
-      }
-
-    }).catch(function (err) {
-      console.log(err);
     });
-}
-
+  }
 //userSchema.methods.createNewTodoItem = async function (text: string){
   //userModel.findOne({})
 //}
