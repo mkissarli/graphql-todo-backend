@@ -88,27 +88,5 @@ userSchema.methods.createNewTodoItem = async function (userId: string, text: str
       }
     });
 }
-//userSchema.methods.createNewTodoItem = async function (text: string){
-//userModel.findOne({})
-//}
-
-userSchema.methods.getTodoById = function (request: express.Request, response: express.Response) {
-  userModel.findOne({ username: request.session.passport.user, "todos._id": mongoose.Types.ObjectId(request.body.id) })
-    .then(function (doc) {
-      if (doc) {
-        for (var item of doc.todos) {
-          if (item._id == request.body.id) {
-            response.send(item);
-          }
-        }
-      }
-      else {
-        console.log(doc);
-        response.send(false);
-      }
-    }).catch(function (err) {
-      console.log(err);
-    });
-}
 
 export const userModel = mongoose.model<User & mongoose.Document>('User', userSchema);

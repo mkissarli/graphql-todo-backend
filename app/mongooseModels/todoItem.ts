@@ -23,20 +23,6 @@ todoItemSchema.methods.createNew = async function (text: string) {
   const todo = new todoItemModel({ text: text, isCurrent: true });
   todo.save();
   return todo;
-  /*.then(async function(doc){
-    return {
-      code: 200,
-      success: true,
-      message: "User added."
-    }
-  })
-  .catch(async function(err){
-    return{
-      code: 200,
-      success: false,
-      message: "Error adding todo item: " + err
-    }
-  });*/
 }
 
 todoItemSchema.methods.deleteById = async function (id: string) {
@@ -59,7 +45,6 @@ todoItemSchema.methods.deleteById = async function (id: string) {
 }
 
 todoItemSchema.methods.editById = async function (id: string, text: string) {
-  // Seems to remove the text, but screw it.
   return await todoItemModel.findById(id)
     .then(async function (doc) {
       doc.text = text;
