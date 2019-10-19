@@ -1,7 +1,6 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import { TodoItem, todoItemSchema, todoItemModel } from './todoItem';
-import { request } from 'https';
 
 export interface User {
   username: string,
@@ -20,12 +19,10 @@ export const userSchema = new mongoose.Schema({
 });
 
 userSchema.methods.createNew = async function (username: String, password: String) {
-  let userData = { username: username, password: password };
-
-  return userModel.exists(userData)
-    .then(async function (done) {
-      if (!done) {
-        const createdUser = new userModel(userData);
+  return userModel.findOne({username: username})
+    .then(async function(doc){
+      if(!doc){
+        const createdUser = new userModel({username: username, password: password});
         return createdUser.save()
           .then(function (savedUser) {
             return {
@@ -34,8 +31,7 @@ userSchema.methods.createNew = async function (username: String, password: Strin
               success: true
             }
           })
-      }
-      else {
+      } else {
         return {
           message: "Unable to create user: " + username + " as there is already a user with this name.",
           user: null,
@@ -46,7 +42,8 @@ userSchema.methods.createNew = async function (username: String, password: Strin
     .catch(async function (err) {
       return {
         message: "There was an error: " + err,
-        user: null
+        user: null,
+        success: false
       }
     })
 }

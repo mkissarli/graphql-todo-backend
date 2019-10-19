@@ -13,16 +13,26 @@ export const mutations = {
     return await Auth.hashPassword(args.password, 12)
       .then(async function (hash) {
         let response = await userSchema.methods.createNew(args.username, hash);
-        const token = jwt.sign(
-          { username: response.user.username, id: response.user._id },
-          SECRET_KEY,
-        );
-        return {
-          code: 200,
-          success: response.success,
-          message: response.message,
-          user: response.user,
-          token: token
+        if (response.success == true) {
+          const token = jwt.sign(
+            { username: response.user.username, id: response.user._id },
+            SECRET_KEY,
+          );
+          return {
+            code: 200,
+            success: response.success,
+            message: response.message,
+            user: response.user,
+            token: token
+          }
+        } else {
+          return {
+            code: 200,
+            success: response.success,
+            message: response.message,
+            user: response.user,
+            token: ''
+          }
         }
       })
       .catch(async function (error) {
@@ -59,7 +69,7 @@ export const mutations = {
   deleteTodo: async function (parent: any, args: { id: string }, context: any) {
     Auth.requireAuth(context);
     await userModel.findById(context.id)
-      .then(async function(doc){
+      .then(async function (doc) {
         doc.todos.pull(args.id);
         doc.save()
       });
