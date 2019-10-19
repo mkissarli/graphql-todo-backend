@@ -16,7 +16,7 @@ export const queries = {
   },
   // Get yourself.
   me: async function (_: any, __: any, context: any) {
-    //Auth.requireAuth(context);
+    Auth.requireAuth(context);
     return await userSchema.methods.getUser(context.id);
   },
   // Login and recieve a token, which needs to be put into a header.
