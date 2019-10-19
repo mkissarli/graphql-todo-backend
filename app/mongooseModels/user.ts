@@ -30,14 +30,16 @@ userSchema.methods.createNew = async function (username: String, password: Strin
           .then(function (savedUser) {
             return {
               message: ("Created user: " + username + "."),
-              user: savedUser
+              user: savedUser,
+              success: true
             }
           })
       }
       else {
         return {
           message: "Unable to create user: " + username + " as there is already a user with this name.",
-          user: null
+          user: null,
+          success: false
         }
       }
     })
