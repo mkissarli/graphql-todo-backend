@@ -5,6 +5,7 @@ import { todoItemSchema } from './mongooseModels/todoItem';
 import jwt from 'jsonwebtoken';
 import Auth from './auth/auth';
 
+// Should be in a .env file.
 const SECRET_KEY = "secret!";
 
 export const queries = {

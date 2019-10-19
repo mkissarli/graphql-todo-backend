@@ -23,6 +23,7 @@ const resolvers = {
   Mutation: mutations
 }
 
+// Should be in a .env file.
 const SECRET_KEY = "secret!";
 
 const app = express()
