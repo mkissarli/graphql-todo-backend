@@ -20,45 +20,45 @@ export const queries = {
     return await userSchema.methods.getUser(context.id);
   },
   // Login and recieve a token, which needs to be put into a header.
-  loginUser: async function (parent: any, args: {username: string, password: string}) {
+  loginUser: async function (parent: any, args: { username: string, password: string }) {
     return await userModel.findOne({ username: args.username })
       .then(async function (doc: any) {
-        return await Auth.compare(args.password, doc.password)
-          .then(async function () {
-            const token = jwt.sign({
-              id: doc._id,
-              username: doc.username
-            },
+        var correctPassword = await Auth.compare(args.password, doc.password)
+
+        if (correctPassword === true) {
+          const token = jwt.sign({
+            id: doc._id,
+            username: doc.username
+          },
             SECRET_KEY, { expiresIn: '1y' }
-            )
-            return {
-              code: 200,
-              message: "Login successful, token created.",
-              success: true,
-              user: doc,
-              token: token
-            };
-          })
-          .catch(async function () { 
-            return { 
-              code: 200,
-              success: false,
-              message: "User login failed, no token will be generated.",
-              token: null,
-              user: null
-            };
-          })
-          .catch(async function () {
-            return {
-              code: 200,
-              success: false,
-              message: "User login failed, no token will be generated.",
-              token: null,
-              user: null
-            };
-          });
+          )
+          return {
+            code: 200,
+            message: "Login successful, token created.",
+            success: true,
+            user: doc,
+            token: token
+          };
+        } else {
+          return {
+            code: 200,
+            message: "Login failed, no token created.",
+            success: false,
+            user: null,
+            token: null
+          }
+        }
+      })
+      .catch(async function (err) {
+        return {
+          code: 200,
+          message: "Login failed, no token created.",
+          success: false,
+          user: null,
+          token: null
+        }
       })
   }
-};
+}
 
 export default queries;

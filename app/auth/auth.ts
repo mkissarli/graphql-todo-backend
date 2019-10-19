@@ -34,7 +34,7 @@ export default class Auth {
     }
   }
 
-  public static requireSpecificAuth(context, value){
+  public static requireSpecificAuth(context, value) {
     if (context != value) {
       throw new Error('You are not authorized!')
     }

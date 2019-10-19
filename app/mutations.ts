@@ -21,7 +21,7 @@ export const mutations = {
           return {
             code: 200,
             success: response.success,
-            message: response.message,
+            message: response.message + hash,
             user: response.user,
             token: token
           }
