@@ -32,7 +32,7 @@ export const queries = {
             SECRET_KEY, { expiresIn: '1y' }
             )
             return {
-              status: 200,
+              code: 200,
               message: "Login successful, token created.",
               success: true,
               user: doc,
@@ -41,7 +41,7 @@ export const queries = {
           })
           .catch(async function () { 
             return { 
-              status: 200,
+              code: 200,
               success: false,
               message: "User login failed, no token will be generated.",
               token: null,
@@ -50,7 +50,7 @@ export const queries = {
           })
           .catch(async function () {
             return {
-              status: 200,
+              code: 200,
               success: false,
               message: "User login failed, no token will be generated.",
               token: null,
